@@ -6,7 +6,7 @@ import signal
 
 class _LinkedPaned(Gtk.Paned):
     """
-        Paned container with linex resize event.
+        Paned container with linked resize event.
     """
 
     loop = False
@@ -34,7 +34,7 @@ class _LinkedPaned(Gtk.Paned):
 
 class PanedQuadrent(Gtk.Paned):
     """
-        Paned Quadrent
+        Nested Gtk.Paned containers to make a quadent with linked panes.
     """
 
     child1 = Gtk.Frame(shadow_type=Gtk.ShadowType.IN)
