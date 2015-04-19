@@ -1,28 +1,18 @@
+#!/usr/bin/env python
+
 from gi.repository import Gtk
 import signal
 
-from pprint import pprint
-import pdb
 
-class Paned(Gtk.Paned):
-    """docstring for Paned"""
+class _LinkedPaned(Gtk.Paned):
+    """
+        Paned container with linex resize event.
+    """
 
     loop = False
 
-    def __init__(self, orientation, child1, child2, size, shadow=Gtk.ShadowType.IN):
-        super(Paned, self).__init__(orientation=orientation)
-
-        self.child1 = child1
-        self.frame1 = Gtk.Frame(shadow_type=shadow)
-        self.frame1.set_size_request(*size)
-        self.pack1(self.frame1, resize=True, shrink=False)
-        self.frame1.add(child1)
-
-        self.child2 = child2
-        self.frame2 = Gtk.Frame(shadow_type=shadow)
-        self.frame2.set_size_request(*size)
-        self.pack2(self.frame2, resize=True, shrink=False)
-        self.frame2.add(child2)
+    def __init__(self):
+        super(_LinkedPaned, self).__init__()
 
     def on_notify(self, _, gparamspec):
 
@@ -42,3 +32,54 @@ class Paned(Gtk.Paned):
         self.linked = linked
 
 
+class PanedQuadrent(Gtk.Paned):
+    """
+        Paned Quadrent
+    """
+
+    child1 = Gtk.Frame(shadow_type=Gtk.ShadowType.IN)
+    child2 = Gtk.Frame(shadow_type=Gtk.ShadowType.IN)
+    child3 = Gtk.Frame(shadow_type=Gtk.ShadowType.IN)
+    child4 = Gtk.Frame(shadow_type=Gtk.ShadowType.IN)
+
+    _linked1 = _LinkedPaned()
+    _linked2 = _LinkedPaned()
+
+    def __init__(self, orientation=Gtk.Orientation.VERTICAL):
+        super(PanedQuadrent, self).__init__()
+
+        self.orientation = orientation
+        self._init_orientation()
+
+        self._linked1.bind_resize(self._linked2)
+        self._linked2.bind_resize(self._linked1)
+
+        self._linked1.pack1(self.child1)
+        self._linked1.pack2(self.child2)
+        self._linked2.pack1(self.child3)
+        self._linked2.pack2(self.child4)
+
+        super(PanedQuadrent, self).pack1(self._linked1)
+        super(PanedQuadrent, self).pack2(self._linked2)
+
+    def _init_orientation(self):
+        self.set_orientation(self.orientation)
+
+        # Invert opientation
+        self.sub_orientation = (
+            Gtk.Orientation.HORIZONTAL
+            if self.orientation is Gtk.Orientation.VERTICAL
+            else Gtk.Orientation.VERTICAL
+        )
+
+        self._linked1.set_orientation(self.sub_orientation)
+        self._linked2.set_orientation(self.sub_orientation)
+
+    def pack1(self, widget):
+        self.child1.add(widget)
+    def pack2(self, widget):
+        self.child2.add(widget)
+    def pack3(self, widget):
+        self.child3.add(widget)
+    def pack4(self, widget):
+        self.child4.add(widget)
