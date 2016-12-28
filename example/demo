@@ -29,15 +29,41 @@ def main():
 
     if 'gtk':
         win = Gtk.Window()
-        win.set_size_request(300, 200)
+        # win.set_size_request(500, 400)
         win.connect("delete-event", Gtk.main_quit)
 
-        if 'linkedpanes':
-            _linkedpanes = gtk_panedquadrent.PanedQuadrant(
-                Gtk.Label('Top Left'), Gtk.Label('Top Right'),
-                Gtk.Label('Bottom Left'), Gtk.Label('Bottom Right'),
-            )
-            win.add(_linkedpanes)
+        layout = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        win.add(layout)
+
+        # linkedpanes
+        paned_quadrant = gtk_panedquadrent.PanedQuadrant(
+            Gtk.Label('Top Left'), Gtk.Label('Top Right'),
+            Gtk.Label('Bottom Left'), Gtk.Label('Bottom\nRight'),
+            expand=True
+        )
+        layout.add(paned_quadrant)
+
+        # methods
+        buttons = Gtk.ButtonBox(
+            orientation=Gtk.Orientation.HORIZONTAL,
+            layout_style=Gtk.ButtonBoxStyle.EDGE,
+            margin=5,
+        )
+        layout.add(buttons)
+        buttons_left = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        buttons.add(buttons_left)
+        buttons_right = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        buttons.add(buttons_right)
+        if buttons:
+            # reset
+            reset_button = Gtk.Button('Reset')
+            reset_button.get_child().set_padding(xpad=10, ypad=0)
+            def _clicked(*_):
+                paned_quadrant.reset()
+            reset_button.connect('clicked', _clicked)
+            buttons_left.add(reset_button)
+
+            # hadjust
 
         win.show_all()
         signal.signal(signal.SIGINT, signal.SIG_DFL)

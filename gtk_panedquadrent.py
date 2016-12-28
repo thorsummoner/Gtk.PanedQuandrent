@@ -22,7 +22,6 @@
 
 from gi.repository import Gtk
 
-
 class PanedQuadrant(Gtk.Bin):
     """ Linked Panes is a set of three paned widgets, one top level one
         and two nested ones that keep in sync with eachother.
@@ -33,30 +32,33 @@ class PanedQuadrant(Gtk.Bin):
             bl (Gtk.Widget): Bottom left widget
             br (Gtk.Widget): Bottom right widget
     """
-    def __init__(self, tl, tr, bl, br, *args, **kwargs):
+    def __init__(self, tl, tr, bl, br, pane_width=-1, pane_height=-1, width=-1, height=-1, *args, **kwargs):
         super(PanedQuadrant, self).__init__()
+        self.connect('realize', self.on_realize)
+
+        self.tl = tl
+        self.tr = tr
+        self.bl = bl
+        self.br = br
 
         # linked-pane
         self.link1 = LinkedPane(
             Gtk.Orientation.HORIZONTAL,
-            tl, tr,
-            (160, 90)
+            self.tl, self.tr,
+            width=pane_width, height=pane_height,
         )
         self.link2 = LinkedPane(
             Gtk.Orientation.HORIZONTAL,
-            bl, br,
-            (160, 90)
+            self.bl, self.br,
+            width=pane_width, height=pane_height,
         )
         self.link1.bind_resize(self.link2)
         self.link2.bind_resize(self.link1)
-
-
 
         # primary-pane
         self.pane = Pane(
             Gtk.Orientation.VERTICAL,
             self.link1, self.link2,
-            (160, 90),
             Gtk.ShadowType.NONE,
             *args, **kwargs
         )
@@ -65,9 +67,10 @@ class PanedQuadrant(Gtk.Bin):
     def reset(self):
         """ Reset panes to equal position
         """
-        self.pane.set_position(-1)
-        self.link1.set_position(-1)
-        self.link2.set_position(-1)
+        self.pane.set_position(0.5 * self.pane.get_allocated_height())
+        vposition = 0.5 * self.pane.get_allocated_width()
+        self.link1.set_position(vposition)
+        self.link2.set_position(vposition)
 
     def set_hposition(self, position):
         """ Adjust Linked Horizontal Position
@@ -80,6 +83,22 @@ class PanedQuadrant(Gtk.Bin):
         """
         self.pane.set_position(position)
 
+    def on_realize(self, _):
+        """ Make minimum sizes homogeneous.
+        """
+        tl_min = self.tl.get_preferred_size()[0]
+        tr_min = self.tr.get_preferred_size()[0]
+        bl_min = self.bl.get_preferred_size()[0]
+        br_min = self.br.get_preferred_size()[0]
+
+        min_width = max([tl_min.width, tr_min.width, bl_min.width, br_min.width])
+        min_height = max([tl_min.height, tr_min.height, bl_min.height, br_min.height])
+
+        self.tl.set_size_request(min_width, min_height)
+        self.tr.set_size_request(min_width, min_height)
+        self.bl.set_size_request(min_width, min_height)
+        self.br.set_size_request(min_width, min_height)
+
 class Pane(Gtk.Paned):
     """ Gtk.Paned wrapper for easier building.
 
@@ -91,18 +110,23 @@ class Pane(Gtk.Paned):
             shadow (Gtk.ShadowType, optional): Shadow type, assumed "in" for best visual ease.
     """
 
-    def __init__(self, orientation, child1, child2, size, shadow=Gtk.ShadowType.IN, *args, **kwargs):
+    def __init__(self,
+                 orientation, child1, child2,
+                 width=-1, height=-1,
+                 shadow=Gtk.ShadowType.IN,
+                 *args, **kwargs
+    ):
         super(Pane, self).__init__(orientation=orientation, *args, **kwargs)
 
         self.child1 = child1
         self.frame1 = Gtk.Frame(shadow_type=shadow)
-        self.frame1.set_size_request(*size)
+        self.frame1.set_size_request(width, height)
         self.pack1(self.frame1, resize=True, shrink=False)
         self.frame1.add(child1)
 
         self.child2 = child2
         self.frame2 = Gtk.Frame(shadow_type=shadow)
-        self.frame2.set_size_request(*size)
+        self.frame2.set_size_request(width, height)
         self.pack2(self.frame2, resize=True, shrink=False)
         self.frame2.add(child2)
 
@@ -117,8 +141,8 @@ class LinkedPane(Pane):
     _lp_user_activated = False
     linked = None
 
-    def __init__(self, *args):
-        super(LinkedPane, self).__init__(*args)
+    def __init__(self, *args, **kwargs):
+        super(LinkedPane, self).__init__(*args, **kwargs)
         self.connect('notify::position', self.on_position)
         self.connect('button-press-event', self.on_button_press)
         self.connect('button-release-event', self.on_button_release)
