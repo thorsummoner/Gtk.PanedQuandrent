@@ -32,24 +32,29 @@ class PanedQuadrant(Gtk.Bin):
             bl (Gtk.Widget): Bottom left widget
             br (Gtk.Widget): Bottom right widget
     """
-    def __init__(self, tl, tr, bl, br, pane_width=-1, pane_height=-1, width=-1, height=-1, *args, **kwargs):
+    def __init__(self,
+                 tl, tr, bl, br,
+                 pane_width=-1, pane_height=-1,
+                 width=-1, height=-1,
+                 *args, **kwargs
+                ):
         super(PanedQuadrant, self).__init__()
         self.connect('realize', self.on_realize)
 
-        self.tl = tl
-        self.tr = tr
-        self.bl = bl
-        self.br = br
+        self.tl_pane = tl
+        self.tr_pane = tr
+        self.bl_pane = bl
+        self.br_pane = br
 
         # linked-pane
         self.link1 = LinkedPane(
             Gtk.Orientation.HORIZONTAL,
-            self.tl, self.tr,
+            self.tl_pane, self.tr_pane,
             width=pane_width, height=pane_height,
         )
         self.link2 = LinkedPane(
             Gtk.Orientation.HORIZONTAL,
-            self.bl, self.br,
+            self.bl_pane, self.br_pane,
             width=pane_width, height=pane_height,
         )
         self.link1.bind_resize(self.link2)
@@ -62,15 +67,17 @@ class PanedQuadrant(Gtk.Bin):
             Gtk.ShadowType.NONE,
             *args, **kwargs
         )
+        self.pane.set_size_request(width, height)
         self.add(self.pane)
 
     def reset(self):
         """ Reset panes to equal position
         """
-        self.pane.set_position(0.5 * self.pane.get_allocated_height())
-        vposition = 0.5 * self.pane.get_allocated_width()
+        self.pane.set_position(self.pane.get_allocated_height() / float(2) - 1)
+        vposition = self.link1.get_allocated_width() / float(2) - 1
         self.link1.set_position(vposition)
         self.link2.set_position(vposition)
+
 
     def set_hposition(self, position):
         """ Adjust Linked Horizontal Position
@@ -86,18 +93,18 @@ class PanedQuadrant(Gtk.Bin):
     def on_realize(self, _):
         """ Make minimum sizes homogeneous.
         """
-        tl_min = self.tl.get_preferred_size()[0]
-        tr_min = self.tr.get_preferred_size()[0]
-        bl_min = self.bl.get_preferred_size()[0]
-        br_min = self.br.get_preferred_size()[0]
+        tl_min = self.tl_pane.get_preferred_size()[0]
+        tr_min = self.tr_pane.get_preferred_size()[0]
+        bl_min = self.bl_pane.get_preferred_size()[0]
+        br_min = self.br_pane.get_preferred_size()[0]
 
         min_width = max([tl_min.width, tr_min.width, bl_min.width, br_min.width])
         min_height = max([tl_min.height, tr_min.height, bl_min.height, br_min.height])
 
-        self.tl.set_size_request(min_width, min_height)
-        self.tr.set_size_request(min_width, min_height)
-        self.bl.set_size_request(min_width, min_height)
-        self.br.set_size_request(min_width, min_height)
+        self.tl_pane.set_size_request(min_width, min_height)
+        self.tr_pane.set_size_request(min_width, min_height)
+        self.bl_pane.set_size_request(min_width, min_height)
+        self.br_pane.set_size_request(min_width, min_height)
 
 class Pane(Gtk.Paned):
     """ Gtk.Paned wrapper for easier building.
@@ -115,7 +122,7 @@ class Pane(Gtk.Paned):
                  width=-1, height=-1,
                  shadow=Gtk.ShadowType.IN,
                  *args, **kwargs
-    ):
+                ):
         super(Pane, self).__init__(orientation=orientation, *args, **kwargs)
 
         self.child1 = child1
