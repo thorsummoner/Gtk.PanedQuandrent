@@ -33,31 +33,52 @@ class PanedQuadrant(Gtk.Bin):
             bl (Gtk.Widget): Bottom left widget
             br (Gtk.Widget): Bottom right widget
     """
-    def __init__(self, tl, tr, bl, br):
+    def __init__(self, tl, tr, bl, br, *args, **kwargs):
         super(PanedQuadrant, self).__init__()
 
         # linked-pane
-        link1 = LinkedPane(
+        self.link1 = LinkedPane(
             Gtk.Orientation.HORIZONTAL,
             tl, tr,
             (160, 90)
         )
-        link2 = LinkedPane(
+        self.link2 = LinkedPane(
             Gtk.Orientation.HORIZONTAL,
             bl, br,
             (160, 90)
         )
-        link1.bind_resize(link2)
-        link2.bind_resize(link1)
+        self.link1.bind_resize(self.link2)
+        self.link2.bind_resize(self.link1)
+
+
 
         # primary-pane
-        self.add(Pane(
+        self.pane = Pane(
             Gtk.Orientation.VERTICAL,
-            link1, link2,
+            self.link1, self.link2,
             (160, 90),
-            Gtk.ShadowType.NONE
-        ))
+            Gtk.ShadowType.NONE,
+            *args, **kwargs
+        )
+        self.add(self.pane)
 
+    def reset(self):
+        """ Reset panes to equal position
+        """
+        self.pane.set_position(-1)
+        self.link1.set_position(-1)
+        self.link2.set_position(-1)
+
+    def set_hposition(self, position):
+        """ Adjust Linked Horizontal Position
+        """
+        self.link1.set_position(position)
+        self.link2.set_position(position)
+
+    def set_vposition(self, position):
+        """ Adjust Linked Vertical Position
+        """
+        self.pane.set_position(position)
 
 class Pane(Gtk.Paned):
     """ Gtk.Paned wrapper for easier building.
@@ -70,8 +91,8 @@ class Pane(Gtk.Paned):
             shadow (Gtk.ShadowType, optional): Shadow type, assumed "in" for best visual ease.
     """
 
-    def __init__(self, orientation, child1, child2, size, shadow=Gtk.ShadowType.IN):
-        super(Pane, self).__init__(orientation=orientation)
+    def __init__(self, orientation, child1, child2, size, shadow=Gtk.ShadowType.IN, *args, **kwargs):
+        super(Pane, self).__init__(orientation=orientation, *args, **kwargs)
 
         self.child1 = child1
         self.frame1 = Gtk.Frame(shadow_type=shadow)
