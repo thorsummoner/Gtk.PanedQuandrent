@@ -79,11 +79,17 @@ class PanedQuadrant(Gtk.Bin):
         self.link2.set_position(vposition)
 
 
+    def get_hsize(self):
+        return self.link1.get_allocated_width()
+
     def set_hposition(self, position):
         """ Adjust Linked Horizontal Position
         """
         self.link1.set_position(position)
         self.link2.set_position(position)
+
+    def get_vsize(self):
+        return self.pane.get_allocated_height()
 
     def set_vposition(self, position):
         """ Adjust Linked Vertical Position
